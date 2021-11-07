@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,7 @@ import br.com.jluna.dscatalog.dto.CategoryDTO;
 import br.com.jluna.dscatalog.entities.Category;
 import br.com.jluna.dscatalog.repositories.CategoryRepository;
 import br.com.jluna.dscatalog.services.exceptions.CategoryNotFoundException;
+import br.com.jluna.dscatalog.services.exceptions.DatabaseException;
 
 @Service
 public class CategoryService {
@@ -62,6 +65,20 @@ public class CategoryService {
 
 		} catch (EntityNotFoundException e) {
 			throw new CategoryNotFoundException("id NOT FOUND " + id);
+		}
+
+	}
+
+	public void delete(Long id) {
+
+		try {
+
+			repository.deleteById(id);
+
+		} catch (EmptyResultDataAccessException e) {
+			throw new CategoryNotFoundException("ID NOT FOUND " + id);
+		} catch (DataIntegrityViolationException e) {
+			throw new DatabaseException("Integrity violation");
 		}
 
 	}
