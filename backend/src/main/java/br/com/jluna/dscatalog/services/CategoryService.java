@@ -3,6 +3,8 @@ package br.com.jluna.dscatalog.services;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,24 @@ public class CategoryService {
 		entity = repository.save(entity);
 
 		return new CategoryDTO(entity);
+	}
+
+	@Transactional
+	public CategoryDTO update(Long id, CategoryDTO dto) {
+
+		try {
+
+			var entity = repository.getOne(id);
+			entity.setName(dto.getName());
+
+			entity = repository.save(entity);
+
+			return new CategoryDTO(entity);
+
+		} catch (EntityNotFoundException e) {
+			throw new CategoryNotFoundException("id NOT FOUND " + id);
+		}
+
 	}
 
 }
