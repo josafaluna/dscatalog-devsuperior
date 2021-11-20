@@ -1,86 +1,96 @@
 package br.com.jluna.dscatalog.services;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.persistence.EntityNotFoundException;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import br.com.jluna.dscatalog.dto.CategoryDTO;
 import br.com.jluna.dscatalog.entities.Category;
 import br.com.jluna.dscatalog.repositories.CategoryRepository;
 import br.com.jluna.dscatalog.services.exceptions.CategoryNotFoundException;
 import br.com.jluna.dscatalog.services.exceptions.DatabaseException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryService {
 
-	@Autowired
-	private CategoryRepository repository;
+    private final CategoryRepository repository;
 
-	@Transactional(readOnly = true)
-	public List<CategoryDTO> findAll() {
+    public CategoryService(CategoryRepository repository) {
+        this.repository = repository;
+    }
 
-		List<Category> list = repository.findAll();
-		return list.stream().map(x -> new CategoryDTO(x)).collect(Collectors.toList());
-	}
+    /**
+     * código antigo, retorna todas as categorias
+     */
+//    @Transactional(readOnly = true)
+//    public List<CategoryDTO> findAll() {
+//
+//        List<Category> list = repository.findAll();
+//        return list.stream().map(CategoryDTO::new).collect(Collectors.toList());
+//        //return list.stream().map(x -> new CategoryDTO(x)).collect(Collectors.toList());
+//    }
+    @Transactional(readOnly = true)
+    public Page<CategoryDTO> findAllPaged(PageRequest pageRequest) {
+        Page<Category> list = repository.findAll(pageRequest);
+        return list.map(CategoryDTO::new);
+    }
 
-	@Transactional(readOnly = true)
-	public CategoryDTO findById(Long id) {
 
-		// Category entity = repository.findById(id).get();
-		Category category = repository.findById(id)
-				.orElseThrow(() -> new CategoryNotFoundException("Category not found."));
+    @Transactional(readOnly = true)
+    public CategoryDTO findById(Long id) {
 
-		return new CategoryDTO(category);
-	}
+        // Category entity = repository.findById(id).get();
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found."));
 
-	@Transactional
-	public CategoryDTO insert(CategoryDTO dto) {
+        return new CategoryDTO(category);
+    }
 
-		Category entity = new Category();
-		entity.setName(dto.getName());
+    @Transactional
+    public CategoryDTO insert(CategoryDTO dto) {
 
-		entity = repository.save(entity);
+        Category entity = new Category();
+        entity.setName(dto.getName());
 
-		return new CategoryDTO(entity);
-	}
+        entity = repository.save(entity);
 
-	@Transactional
-	public CategoryDTO update(Long id, CategoryDTO dto) {
+        return new CategoryDTO(entity);
+    }
 
-		try {
+    @Transactional
+    public CategoryDTO update(Long id, CategoryDTO dto) {
 
-			var entity = repository.getOne(id);
-			entity.setName(dto.getName());
+        try {
 
-			entity = repository.save(entity);
+            var entity = repository.getOne(id);
+            entity.setName(dto.getName());
 
-			return new CategoryDTO(entity);
+            entity = repository.save(entity);
 
-		} catch (EntityNotFoundException e) {
-			throw new CategoryNotFoundException("id NOT FOUND " + id);
-		}
+            return new CategoryDTO(entity);
 
-	}
+        } catch (EntityNotFoundException e) {
+            throw new CategoryNotFoundException("id NOT FOUND " + id);
+        }
 
-	public void delete(Long id) {
+    }
 
-		try {
+    public void delete(Long id) {
 
-			repository.deleteById(id);
+        try {
 
-		} catch (EmptyResultDataAccessException e) {
-			throw new CategoryNotFoundException("ID NOT FOUND " + id);
-		} catch (DataIntegrityViolationException e) {
-			throw new DatabaseException("Integrity violation");
-		}
+            repository.deleteById(id);
 
-	}
+        } catch (EmptyResultDataAccessException e) {
+            throw new CategoryNotFoundException("ID NOT FOUND " + id);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Integrity violation");
+        }
+
+    }
 
 }
