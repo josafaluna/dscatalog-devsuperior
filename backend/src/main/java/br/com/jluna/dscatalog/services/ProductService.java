@@ -1,8 +1,8 @@
 package br.com.jluna.dscatalog.services;
 
-import br.com.jluna.dscatalog.dto.CategoryDTO;
-import br.com.jluna.dscatalog.entities.Category;
-import br.com.jluna.dscatalog.repositories.CategoryRepository;
+import br.com.jluna.dscatalog.dto.ProductDTO;
+import br.com.jluna.dscatalog.entities.Product;
+import br.com.jluna.dscatalog.repositories.ProductRepository;
 import br.com.jluna.dscatalog.services.exceptions.DatabaseException;
 import br.com.jluna.dscatalog.services.exceptions.DsCatalogNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,52 +15,43 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 
 @Service
-public class CategoryService {
+public class ProductService {
 
-    private final CategoryRepository repository;
+    private final ProductRepository repository;
 
-    public CategoryService(CategoryRepository repository) {
+    public ProductService(ProductRepository repository) {
         this.repository = repository;
     }
 
-    /**
-     * código antigo, retorna todas as categorias
-     */
-//    @Transactional(readOnly = true)
-//    public List<CategoryDTO> findAll() {
-//
-//        List<Category> list = repository.findAll();
-//        return list.stream().map(CategoryDTO::new).collect(Collectors.toList());
-//        //return list.stream().map(x -> new CategoryDTO(x)).collect(Collectors.toList());
-//    }
     @Transactional(readOnly = true)
-    public Page<CategoryDTO> findAllPaged(PageRequest pageRequest) {
-        Page<Category> list = repository.findAll(pageRequest);
-        return list.map(CategoryDTO::new);
+    public Page<ProductDTO> findAllPaged(PageRequest pageRequest) {
+        Page<Product> list = repository.findAll(pageRequest);
+        return list.map(ProductDTO::new);
     }
 
-
     @Transactional(readOnly = true)
-    public CategoryDTO findById(Long id) {
-
-        // Category entity = repository.findById(id).get();
-        Category category = repository.findById(id)
-                .orElseThrow(() -> new DsCatalogNotFoundException("Category not found."));
-
-        return new CategoryDTO(category);
+    public ProductDTO findById(Long id) {
+        Product product = repository.findById(id).orElseThrow(() -> new DsCatalogNotFoundException("Product not found"));
+        return new ProductDTO(product, product.getCategories());
     }
 
     @Transactional
-    public CategoryDTO insert(CategoryDTO dto) {
-        Category entity = new Category();
+    public ProductDTO insert(ProductDTO dto) {
+        var entity = new Product();
         entity.setName(dto.getName());
+        entity.setDescription(dto.getDescription());
+        entity.setPrice(dto.getPrice());
+        entity.setImgUrl(dto.getImgUrl());
+        entity.setDate(dto.getDate());
+
         entity = repository.save(entity);
 
-        return new CategoryDTO(entity);
+        return new ProductDTO(entity);
     }
 
+
     @Transactional
-    public CategoryDTO update(Long id, CategoryDTO dto) {
+    public ProductDTO update(Long id, ProductDTO dto) {
 
         try {
 
@@ -68,7 +59,7 @@ public class CategoryService {
             entity.setName(dto.getName());
             entity = repository.save(entity);
 
-            return new CategoryDTO(entity);
+            return new ProductDTO(entity);
 
         } catch (EntityNotFoundException e) {
             throw new DsCatalogNotFoundException("id NOT FOUND " + id);
